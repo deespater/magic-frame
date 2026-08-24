@@ -18,6 +18,7 @@ const CORE_TYPES = Object.keys(WIDGET_CONFIG_SCHEMAS);
 const PURPOSE: Record<string, string> = {
   "ClockWidget.tsx": "Time and date, optionally with a small live weather line.",
   "WeatherWidget.tsx": "Current weather and forecast; several data sources.",
+  "YrWeatherWidget.tsx": "Weather from Yr (MET Norway) with an AI one-word condition, a next-1-2h note, and a 3-hour strip.",
   "CalendarWidget.tsx": "iCal, Google, Microsoft and Home Assistant calendars.",
   "ButtonWidget.tsx": "Tap tiles: Home Assistant service calls, webhooks, or show/hide other widgets.",
   "HomeAssistantWidget.tsx": "Live Home Assistant entities as tiles, with per-state colour and icon rules.",

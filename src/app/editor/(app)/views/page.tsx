@@ -76,6 +76,7 @@ function AddressHint() {
 const WIDGET_META: Record<string, { color: string; Icon: any }> = {
   "ClockWidget.tsx":           { color: "rgba(59,130,246,0.55)",  Icon: ClockIcon },      // blue
   "WeatherWidget.tsx":         { color: "rgba(6,182,212,0.55)",   Icon: CloudSun },       // cyan
+  "YrWeatherWidget.tsx":       { color: "rgba(6,182,212,0.55)",   Icon: CloudSun },       // cyan
   "CalendarWidget.tsx":        { color: "rgba(139,92,246,0.55)",  Icon: CalendarIcon },   // violet
   "HomeAssistantWidget.tsx":   { color: "rgba(34,197,94,0.55)",   Icon: Zap },            // green
   "HANotificationWidget.tsx":  { color: "rgba(249,115,22,0.55)",  Icon: Bell },           // orange

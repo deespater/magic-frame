@@ -68,6 +68,7 @@ const WIDGET_CATALOG: {
 }[] = [
   { type: "ClockWidget.tsx", label: "Uhr", icon: <ClockIcon size={16} /> },
   { type: "WeatherWidget.tsx", label: "Wetter", icon: <CloudSun size={16} /> },
+  { type: "YrWeatherWidget.tsx", label: "Yr Wetter", icon: <CloudSun size={16} /> },
   { type: "CalendarWidget.tsx", label: "Kalender", icon: <CalendarIcon size={16} /> },
   { type: "HomeAssistantWidget.tsx", label: "HA Entity", icon: <Zap size={16} /> },
   { type: "ButtonWidget.tsx", label: "Buttons", icon: <Power size={16} /> },

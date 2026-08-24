@@ -52,6 +52,7 @@ type Dashboard = { id: string; name: string; orientation?: Orientation; layout?:
 const WIDGET_META: Record<string, { color: string; Icon: any }> = {
   "ClockWidget.tsx":          { color: "rgba(59,130,246,0.55)",  Icon: ClockIcon },
   "WeatherWidget.tsx":        { color: "rgba(6,182,212,0.55)",   Icon: CloudSun },
+  "YrWeatherWidget.tsx":      { color: "rgba(6,182,212,0.55)",   Icon: CloudSun },
   "CalendarWidget.tsx":       { color: "rgba(139,92,246,0.55)",  Icon: CalendarIcon },
   "HomeAssistantWidget.tsx":  { color: "rgba(34,197,94,0.55)",   Icon: Zap },
   "HANotificationWidget.tsx": { color: "rgba(249,115,22,0.55)",  Icon: Bell },

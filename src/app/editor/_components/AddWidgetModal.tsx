@@ -26,6 +26,10 @@ export default function AddWidgetModal({ onClose, addWidget }: AddWidgetModalPro
                 <div className="text-3xl mb-2">⛅</div>
                 <div className="font-bold text-[var(--mf-fg)]">{t("Live Wetter")}</div>
              </button>
+             <button onClick={() => addWidget("YrWeatherWidget.tsx")} className="bg-[var(--mf-elev)]/5 hover:bg-violet-500/10 border border-[var(--mf-bdr)]/10 hover:border-violet-500/30 rounded-xl p-4 text-center transition-colors">
+                <div className="text-3xl mb-2">🌤️</div>
+                <div className="font-bold text-[var(--mf-fg)]">{t("Yr Wetter (KI)")}</div>
+             </button>
              <button onClick={() => addWidget("CalendarWidget.tsx")} className="bg-[var(--mf-elev)]/5 hover:bg-[var(--mf-elev)]/10 border border-[var(--mf-bdr)]/10 rounded-xl p-4 text-center transition-colors">
                 <div className="text-3xl mb-2">📅</div>
                 <div className="font-bold text-[var(--mf-fg)]">{t("Kalender")}</div>

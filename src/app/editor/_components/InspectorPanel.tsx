@@ -11,6 +11,7 @@ import { accentFor, widgetIconFor } from "./widget-visuals";
 import WidgetPreview from "./WidgetPreview";
 import ClockInspector from "../_inspectors/ClockInspector";
 import WeatherInspector from "../_inspectors/WeatherInspector";
+import YrWeatherInspector from "../_inspectors/YrWeatherInspector";
 import ButtonInspector from "../_inspectors/ButtonInspector";
 import CalendarInspector from "../_inspectors/CalendarInspector";
 import HomeAssistantInspector from "../_inspectors/HomeAssistantInspector";
@@ -63,6 +64,7 @@ type Tab = "layout" | "text" | "content";
 const TYPE_LABELS: Record<string, string> = {
   "ClockWidget.tsx": "Uhr",
   "WeatherWidget.tsx": "Wetter",
+  "YrWeatherWidget.tsx": "Yr Wetter",
   "CalendarWidget.tsx": "Kalender",
   "HomeAssistantWidget.tsx": "HA Entity",
   "ButtonWidget.tsx": "Buttons",
@@ -607,6 +609,18 @@ function ContentTab(props: InspectorPanelProps) {
       )}
       {activeWidget.type === "WeatherWidget.tsx" && (
         <WeatherInspector
+          widget={activeWidget}
+          updateConfig={updateConfig}
+          citySearchQuery={citySearchQuery}
+          citySearchResults={citySearchResults}
+          isSearchingCity={isSearchingCity}
+          searchCity={searchCity}
+          setCitySearchResults={setCitySearchResults}
+          setCitySearchQuery={setCitySearchQuery}
+        />
+      )}
+      {activeWidget.type === "YrWeatherWidget.tsx" && (
+        <YrWeatherInspector
           widget={activeWidget}
           updateConfig={updateConfig}
           citySearchQuery={citySearchQuery}

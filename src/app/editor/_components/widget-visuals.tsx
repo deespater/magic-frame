@@ -28,6 +28,7 @@ import {
 export const WIDGET_ACCENT: Record<string, { hex: string; glow: string; tint: string }> = {
   "ClockWidget.tsx":           { hex: "#3b82f6", glow: "rgba(59,130,246,0.25)",  tint: "rgba(59,130,246,0.12)"  }, // blue
   "WeatherWidget.tsx":         { hex: "#06b6d4", glow: "rgba(6,182,212,0.25)",   tint: "rgba(6,182,212,0.12)"   }, // cyan
+  "YrWeatherWidget.tsx":       { hex: "#06b6d4", glow: "rgba(6,182,212,0.25)",   tint: "rgba(6,182,212,0.12)"   }, // cyan
   "CalendarWidget.tsx":        { hex: "#8b5cf6", glow: "rgba(139,92,246,0.25)",  tint: "rgba(139,92,246,0.12)"  }, // violet
   "HomeAssistantWidget.tsx":   { hex: "#22c55e", glow: "rgba(34,197,94,0.25)",   tint: "rgba(34,197,94,0.12)"   }, // green
   "HANotificationWidget.tsx":  { hex: "#f97316", glow: "rgba(249,115,22,0.25)",  tint: "rgba(249,115,22,0.12)"  }, // orange
@@ -59,6 +60,8 @@ export function widgetIconFor(type: string, size = 12): React.ReactNode {
     case "ClockWidget.tsx":
       return <ClockIcon size={size} />;
     case "WeatherWidget.tsx":
+      return <CloudSun size={size} />;
+    case "YrWeatherWidget.tsx":
       return <CloudSun size={size} />;
     case "CalendarWidget.tsx":
       return <CalendarIcon size={size} />;

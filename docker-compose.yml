@@ -46,6 +46,9 @@ services:
       - MS_CLIENT_ID=${MS_CLIENT_ID:-}
       - MS_CLIENT_SECRET=${MS_CLIENT_SECRET:-}
       - OPENWEATHERMAP_API_KEY=${OPENWEATHERMAP_API_KEY:-}
+      # Anthropic key for the Yr weather widget's AI summary (Claude Haiku).
+      # Empty = the AI line is skipped; the widget still shows weather.
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       # Caddy-Admin-API für Reloads. Standard-URL des Sidecar-Containers.
       - CADDY_ADMIN_URL=${CADDY_ADMIN_URL:-http://caddy:2019}
       # Notbremse für die Entitäts-Erlaubnisliste von /api/ha/action (auf "1"

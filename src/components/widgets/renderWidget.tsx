@@ -4,6 +4,7 @@ import React from "react";
 import ClockWidget from "./ClockWidget";
 import CalendarWidget from "./CalendarWidget";
 import WeatherWidget from "./WeatherWidget";
+import YrWeatherWidget from "./YrWeatherWidget";
 import HomeAssistantWidget from "./HomeAssistantWidget";
 import HANotificationWidget from "./HANotificationWidget";
 import ButtonWidget from "./ButtonWidget";
@@ -72,6 +73,7 @@ export function renderWidget(type: string, config: any, opts: RenderWidgetOpts =
   if (type === "MediaPlayerWidget.tsx") return <MediaPlayerWidget config={config} onVisibilityChange={onVisibilityChange} />;
   if (type === "CalendarWidget.tsx") return <CalendarWidget config={config} dashboardId={dashboardId} onVisibilityChange={onVisibilityChange} />;
   if (type === "WeatherWidget.tsx") return <WeatherWidget config={config} location={config?.location} lat={config?.lat} lon={config?.lon} />;
+  if (type === "YrWeatherWidget.tsx") return <YrWeatherWidget config={config} location={config?.location} lat={config?.lat} lon={config?.lon} />;
   if (type === "HomeAssistantWidget.tsx") return <HomeAssistantWidget config={config} onVisibilityChange={onVisibilityChange} />;
   if (type === "HANotificationWidget.tsx") return <HANotificationWidget config={config} dashboardId={dashboardId} onVisibilityChange={onVisibilityChange} />;
   // Custom-Module: type beginnt mit "custom:". Werden zur Laufzeit via

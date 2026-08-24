@@ -3,6 +3,7 @@ import {
   fetchHomeAssistantWeather,
   fetchOpenMeteo,
   fetchOpenWeatherMap,
+  fetchYr,
 } from "@/lib/weather/providers";
 
 const ALLOWED_TEMP = new Set(['celsius', 'fahrenheit']);
@@ -34,6 +35,14 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Latitude and Longitude are required' }, { status: 400 });
       }
       const data = await fetchOpenWeatherMap(lat, lon, { tempUnit, windUnit });
+      return NextResponse.json(data);
+    }
+
+    if (provider === 'yr' || provider === 'met.no') {
+      if (!lat || !lon) {
+        return NextResponse.json({ error: 'Latitude and Longitude are required' }, { status: 400 });
+      }
+      const data = await fetchYr(lat, lon, { tempUnit, windUnit });
       return NextResponse.json(data);
     }
 

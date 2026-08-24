@@ -197,6 +197,155 @@ export async function fetchOpenWeatherMap(
   };
 }
 
+// MET Norway (Yr) — locationforecast/2.0. Free, no API key, but the terms of
+// service REQUIRE an identifying User-Agent (a default/empty one is blocked with
+// 403). Temperatures come in °C and wind in m/s; we convert to the requested
+// units. The forecast is a flat list of timesteps, so the daily view is built by
+// grouping timesteps per calendar day.
+const YR_ENDPOINT = "https://api.met.no/weatherapi/locationforecast/2.0/compact";
+const YR_USER_AGENT = "MagicFrame/1.x github.com/jeremiaa/magic-frame";
+
+export async function fetchYr(
+  lat: string,
+  lon: string,
+  units: WeatherUnits,
+): Promise<NormalizedWeather> {
+  // MET Norway asks callers to round coordinates to ~4 decimals (fewer distinct
+  // cache keys on their side). Anything finer is rejected as an over-precise req.
+  const q = new URLSearchParams({
+    lat: Number(lat).toFixed(4),
+    lon: Number(lon).toFixed(4),
+  });
+  const res = await fetch(`${YR_ENDPOINT}?${q.toString()}`, {
+    headers: { "User-Agent": YR_USER_AGENT },
+    next: { revalidate: 60 * 15 },
+  });
+  if (!res.ok) throw new Error(`yr ${res.status}`);
+  const data = await res.json();
+
+  const series: any[] = Array.isArray(data?.properties?.timeseries)
+    ? data.properties.timeseries
+    : [];
+  if (series.length === 0) throw new Error("yr_empty");
+
+  // m/s → requested wind unit
+  const convertWind = (ms: number): number => {
+    if (units.windUnit === "kmh") return ms * 3.6;
+    if (units.windUnit === "mph") return ms * 2.236936;
+    if (units.windUnit === "kn") return ms * 1.943844;
+    return ms; // ms
+  };
+  const toF = (c: number) => (c * 9) / 5 + 32;
+  const temp = (c: number) => (units.tempUnit === "fahrenheit" ? toF(c) : c);
+
+  const now = series[0];
+  const nowInstant = now?.data?.instant?.details ?? {};
+  const nowSymbol =
+    now?.data?.next_1_hours?.summary?.symbol_code ??
+    now?.data?.next_6_hours?.summary?.symbol_code ??
+    "";
+
+  const current = {
+    temperature_2m: temp(Number(nowInstant.air_temperature ?? 0)),
+    apparent_temperature: temp(Number(nowInstant.air_temperature ?? 0)),
+    weather_code: yrSymbolToWmo(nowSymbol),
+    relative_humidity_2m:
+      typeof nowInstant.relative_humidity === "number" ? nowInstant.relative_humidity : undefined,
+    wind_speed_10m:
+      typeof nowInstant.wind_speed === "number" ? convertWind(nowInstant.wind_speed) : undefined,
+    is_day: yrIsDay(nowSymbol),
+    uv_index:
+      typeof nowInstant.ultraviolet_index_clear_sky === "number"
+        ? nowInstant.ultraviolet_index_clear_sky
+        : undefined,
+  };
+
+  // Hourly — the compact feed is hourly for ~2-3 days, then coarser. Cap at 48.
+  const hourlySlice = series.slice(0, 48);
+  const hourly = {
+    time: hourlySlice.map((s) => String(s.time)),
+    temperature_2m: hourlySlice.map((s) => temp(Number(s?.data?.instant?.details?.air_temperature ?? 0))),
+    weather_code: hourlySlice.map((s) =>
+      yrSymbolToWmo(s?.data?.next_1_hours?.summary?.symbol_code ?? s?.data?.next_6_hours?.summary?.symbol_code ?? ""),
+    ),
+    precipitation_probability: hourlySlice.map((s) => {
+      const p = s?.data?.next_1_hours?.details?.probability_of_precipitation;
+      return typeof p === "number" ? Math.round(p) : 0;
+    }),
+    is_day: hourlySlice.map((s) =>
+      yrIsDay(s?.data?.next_1_hours?.summary?.symbol_code ?? s?.data?.next_6_hours?.summary?.symbol_code ?? "") ?? 1,
+    ),
+  };
+
+  // Daily — group timesteps by calendar day, take min/max of the instant temps
+  // and the symbol nearest local noon as that day's representative condition.
+  const byDay = new Map<string, { temps: number[]; noon?: { diff: number; symbol: string } }>();
+  for (const s of series) {
+    const iso = String(s.time);
+    const day = iso.slice(0, 10);
+    const t = s?.data?.instant?.details?.air_temperature;
+    if (typeof t !== "number") continue;
+    const entry = byDay.get(day) ?? { temps: [] };
+    entry.temps.push(t);
+    const hour = new Date(iso).getUTCHours();
+    const diff = Math.abs(hour - 12);
+    const symbol =
+      s?.data?.next_6_hours?.summary?.symbol_code ?? s?.data?.next_1_hours?.summary?.symbol_code ?? "";
+    if (symbol && (!entry.noon || diff < entry.noon.diff)) {
+      entry.noon = { diff, symbol };
+    }
+    byDay.set(day, entry);
+  }
+  const days = Array.from(byDay.entries()).slice(0, 7);
+  const daily = {
+    time: days.map(([day]) => day),
+    weather_code: days.map(([, v]) => yrSymbolToWmo(v.noon?.symbol ?? "")),
+    temperature_2m_max: days.map(([, v]) => temp(Math.max(...v.temps))),
+    temperature_2m_min: days.map(([, v]) => temp(Math.min(...v.temps))),
+    sunrise: [],
+    sunset: [],
+  };
+
+  return { current, daily, hourly, _provider: "yr" };
+}
+
+// MET Norway symbol_code → WMO code, for icon parity with the other providers.
+// Codes carry a _day / _night / _polartwilight suffix we strip first; the base
+// is matched by keyword so the ~100 variants collapse to a handful of buckets.
+function yrSymbolToWmo(code: string): number {
+  const c = (code || "").replace(/_(day|night|polartwilight)$/, "");
+  if (!c) return 3;
+  if (c.includes("thunder")) return 95;
+  if (c.includes("sleet")) return 67;
+  if (c.includes("snow")) {
+    if (c.includes("showers")) return 85;
+    if (c.includes("heavy")) return 75;
+    if (c.includes("light")) return 71;
+    return 73;
+  }
+  if (c.includes("rain")) {
+    if (c.includes("showers")) return c.includes("heavy") ? 82 : c.includes("light") ? 80 : 81;
+    if (c.includes("heavy")) return 65;
+    if (c.includes("light")) return 61;
+    return 63;
+  }
+  if (c.includes("drizzle")) return 51;
+  if (c.includes("fog")) return 45;
+  if (c === "cloudy") return 3;
+  if (c === "partlycloudy") return 2;
+  if (c === "fair") return 1;
+  if (c === "clearsky") return 0;
+  return 3;
+}
+
+// day/night from the symbol suffix. Undefined when the code has no suffix (e.g.
+// the plain "cloudy"), so the widget falls back to its own clock-based check.
+function yrIsDay(code: string): number | undefined {
+  if (/_day$/.test(code)) return 1;
+  if (/_night$/.test(code)) return 0;
+  return undefined;
+}
+
 export async function fetchHomeAssistantWeather(
   entityId: string,
   _units: WeatherUnits,

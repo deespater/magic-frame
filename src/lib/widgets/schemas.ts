@@ -3,6 +3,7 @@ import { z } from "zod";
 export const WIDGET_TYPES = [
   "ClockWidget.tsx",
   "WeatherWidget.tsx",
+  "YrWeatherWidget.tsx",
   "CalendarWidget.tsx",
   "ButtonWidget.tsx",
   "HomeAssistantWidget.tsx",
@@ -104,6 +105,16 @@ const weatherConfig = baseConfig.extend({
   weatherBgOpacity: z.number().optional(),
   weatherBgBlur: z.number().optional(),
 });
+
+// Yr weather widget — reuses the weather fields (location/units/icons) plus the
+// AI-summary options. passthrough so any shared weather field also survives.
+const yrWeatherConfig = weatherConfig
+  .extend({
+    aiSummary: z.boolean().optional(),
+    aiTone: z.string().optional(),
+    showLocation: z.boolean().optional(),
+  })
+  .passthrough();
 
 const calendarConfig = baseConfig.extend({
   icalUrl: z.string().optional(),
@@ -529,6 +540,9 @@ export const widgetLayoutItemSchema = z.union([
     .object({ type: z.literal("WeatherWidget.tsx"), config: weatherConfig })
     .merge(commonWidgetFields()),
   z
+    .object({ type: z.literal("YrWeatherWidget.tsx"), config: yrWeatherConfig })
+    .merge(commonWidgetFields()),
+  z
     .object({ type: z.literal("CalendarWidget.tsx"), config: calendarConfig })
     .merge(commonWidgetFields()),
   z
@@ -617,6 +631,7 @@ function commonWidgetFields() {
 export const WIDGET_CONFIG_SCHEMAS: Record<string, z.ZodTypeAny> = {
   "ClockWidget.tsx": clockConfig,
   "WeatherWidget.tsx": weatherConfig,
+  "YrWeatherWidget.tsx": yrWeatherConfig,
   "CalendarWidget.tsx": calendarConfig,
   "ButtonWidget.tsx": buttonConfig,
   "HomeAssistantWidget.tsx": homeAssistantConfig,

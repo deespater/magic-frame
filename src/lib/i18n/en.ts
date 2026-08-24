@@ -2159,6 +2159,15 @@ export const EN: Record<string, string> = {
   "Ein Kalender antwortet nicht": "A calendar is not answering",
   "Dieses Widget nach der Aktion ausblenden": "Hide this widget after action",
   "Tippen außerhalb der Buttons schließt das Widget": "Tap outside the buttons to close",
+  "Wetter von Yr (MET Norway) mit optionaler KI-Zusammenfassung. Icons und Schrift wie beim Standard-Wetter-Widget.":
+    "Weather from Yr (MET Norway) with an optional AI summary. Icons and type match the standard weather widget.",
+  "KI-Zusammenfassung (Claude Haiku)": "AI summary (Claude Haiku)",
+  "Ein Wort zum aktuellen Wetter plus ein kurzer Hinweis auf die nächsten 1-2 Stunden. Braucht einen Anthropic-API-Key in den Einstellungen oder ANTHROPIC_API_KEY.":
+    "One word for the current weather plus a short note about the next 1-2 hours. Needs an Anthropic API key in Settings, or ANTHROPIC_API_KEY.",
+  "Ton (optional)": "Tone (optional)",
+  "z.B. verspielt, knapp, sachlich": "e.g. playful, brief, factual",
+  "Yr Wetter (KI)": "Yr weather (AI)",
+  "Bleibt": "Staying",
   "Verzögerung vor dem Ausblenden": "Delay before hiding",
   "Sofort": "Immediately",
 };

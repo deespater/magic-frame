@@ -337,6 +337,7 @@ export const WIDGET_DEFAULT_SIZE: Record<string, { w: number; h: number; bgOpaci
 export const WIDGET_DEFAULT_LABEL: Record<string, string> = {
   "ClockWidget.tsx": "Uhr",
   "WeatherWidget.tsx": "Wetter",
+  "YrWeatherWidget.tsx": "Yr Wetter",
   "CalendarWidget.tsx": "Kalender",
   "HomeAssistantWidget.tsx": "HA Entity",
   "ButtonWidget.tsx": "Buttons",
