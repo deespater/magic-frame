@@ -130,6 +130,8 @@ export default function YrWeatherWidget({
   const uv = typeof data.current?.uv_index === "number" ? data.current.uv_index : undefined;
 
   const nowD = new Date(nowTick);
+  // 24-hour clock, no seconds — re-renders each minute via nowTick.
+  const timeStr = `${nowD.getHours().toString().padStart(2, "0")}:${nowD.getMinutes().toString().padStart(2, "0")}`;
   const isNight =
     typeof data.current.is_day === "number" ? data.current.is_day === 0 : nowD.getHours() < 6 || nowD.getHours() > 20;
 
@@ -166,85 +168,78 @@ export default function YrWeatherWidget({
   const statStyle: CSSProperties = { width: "1em", height: "1em" };
 
   return (
-    // 480×480 personal panel: fill the tile — header hugs the top, stats hug the
-    // bottom, so there's no wasted gap above the temp or below the wind line.
-    <div className="relative flex w-full h-full overflow-hidden items-stretch justify-center gap-[1.5em] py-[0.15em]">
-      {/* Left: current — top block + bottom stats, spread to full height */}
-      <div className="flex flex-col justify-between h-full min-w-0 shrink-0">
-        <div>
-          {config?.showLocation !== false && location && (
-            <span
-              style={{ fontSize: "0.8em", opacity: 0.6 }}
-              className="mb-[0.1em] uppercase tracking-widest text-ellipsis whitespace-nowrap overflow-hidden block"
-            >
-              {location}
-            </span>
-          )}
-          <div className="flex items-center gap-[0.25em]">
-            <span style={{ fontSize: "4.6em" }} className="tracking-tighter leading-none">
-              {currentTemp}
-              {tempSuffix}
-            </span>
-            {/* Icon sized to match the temperature glyph height. */}
-            <div style={{ width: "3.4em", height: "3.4em" }} className="shrink-0 flex items-center justify-center">
-              {wmoToIcon(currentCode, !isNight, config?.iconSet, iconOpts)}
-            </div>
-          </div>
-
-          {/* WORD, FEELS LIKE 14° — one line, all caps */}
-          <div
-            style={{ fontSize: "1.25em", opacity: 0.85 }}
-            className="mt-[0.35em] uppercase tracking-wide text-ellipsis whitespace-nowrap overflow-hidden"
-          >
-            {word}, {t("Fühlt sich an wie")} {feelsLike}
+    // 480×480 personal panel: two big numbers on the top corners (temp left,
+    // clock right), condition lines in the middle-left, and wind/UV + the
+    // 3-hour strip on the bottom corners. justify-between fills the tile height
+    // without stacking the two 4.6em numbers vertically (which overflowed).
+    <div className="relative flex flex-col justify-between w-full h-full overflow-hidden py-[0.1em]">
+      {/* Top row: temp + icon (left) · clock (right) */}
+      <div className="flex items-center justify-between gap-[0.4em]">
+        <div className="flex items-center gap-[0.2em] min-w-0">
+          <span style={{ fontSize: "4.6em" }} className="tracking-tighter leading-none">
+            {currentTemp}
             {tempSuffix}
+          </span>
+          <div style={{ width: "3.2em", height: "3.2em" }} className="shrink-0 flex items-center justify-center">
+            {wmoToIcon(currentCode, !isNight, config?.iconSet, iconOpts)}
           </div>
+        </div>
+        <span style={{ fontSize: "4.6em" }} className="leading-none tracking-tighter tabular-nums shrink-0">
+          {timeStr}
+        </span>
+      </div>
 
-          {/* Near-term line, all caps — always shown. */}
+      {/* Middle: condition line, then near-term (left) sharing a row with the
+          3-hour strip (right) */}
+      <div className="min-w-0">
+        <div
+          style={{ fontSize: "1.25em", opacity: 0.85 }}
+          className="uppercase tracking-wide text-ellipsis whitespace-nowrap overflow-hidden"
+        >
+          {word}, {t("Fühlt sich an wie")} {feelsLike}
+          {tempSuffix}
+        </div>
+        <div className="flex items-center justify-between gap-[1em] mt-[0.2em]">
           <div
             style={{ fontSize: "1em", opacity: 0.65 }}
-            className="mt-[0.1em] uppercase tracking-wide text-ellipsis whitespace-nowrap overflow-hidden"
+            className="min-w-0 flex-1 uppercase tracking-wide text-ellipsis whitespace-nowrap overflow-hidden"
           >
             {soonText}
           </div>
-        </div>
-
-        {/* Wind + UV, small — UV always shown (0 at night). */}
-        <div style={{ fontSize: "14px", opacity: 0.8 }} className="flex items-center gap-x-[0.9em]">
-          {windSpeed !== undefined && (
-            <span className="inline-flex items-center gap-[0.3em]">
-              <Wind style={statStyle} strokeWidth={2} className="opacity-80" />
-              {Math.round(windSpeed)} {windUnitLabel}
-            </span>
+          {hourly.length > 0 && (
+            <div className="flex gap-[1.1em] md:gap-[1.5em] items-center shrink-0">
+              {hourly.map((h: any, i: number) => (
+                <div key={i} className="flex flex-col items-center gap-[0.2em]">
+                  <span style={{ fontSize: "0.8em" }} className="opacity-80 tracking-wide font-medium">
+                    {h.label}
+                  </span>
+                  <div style={{ width: "1.2em", height: "1.2em" }} className="opacity-90 drop-shadow-sm">
+                    {wmoToIcon(h.code, h.isDay, config?.iconSet, { style: config?.meteoconsStyle })}
+                  </div>
+                  <span style={{ fontSize: "0.75em" }} className="font-bold leading-none">
+                    {h.temp}
+                    {tempSuffix}
+                  </span>
+                </div>
+              ))}
+            </div>
           )}
-          <span className="inline-flex items-center gap-[0.3em]">
-            <Sun style={statStyle} strokeWidth={2} className="opacity-80" />
-            UV {Math.round(uv ?? 0)}
-          </span>
         </div>
       </div>
 
-      {/* Right: next 3 hours — vertically centered */}
-      {hourly.length > 0 && (
-        <div className="flex gap-[1em] md:gap-[1.5em] shrink-0 items-center justify-end">
-          {hourly.map((h: any, i: number) => (
-            <div key={i} className="flex flex-col items-center gap-[0.4em]">
-              <span style={{ fontSize: "0.9em" }} className="opacity-80 tracking-wide font-medium">
-                {h.label}
-              </span>
-              <div style={{ width: "1.4em", height: "1.4em" }} className="opacity-90 drop-shadow-sm">
-                {wmoToIcon(h.code, h.isDay, config?.iconSet, { style: config?.meteoconsStyle })}
-              </div>
-              <div className="flex flex-col items-center leading-tight mt-1" style={{ fontSize: "0.85em" }}>
-                <span className="font-bold">
-                  {h.temp}
-                  {tempSuffix}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Bottom-left: wind + UV */}
+      <div style={{ fontSize: "14px", opacity: 0.8 }} className="flex items-center gap-x-[0.9em]">
+        {windSpeed !== undefined && (
+          <span className="inline-flex items-center gap-[0.3em]">
+            <Wind style={statStyle} strokeWidth={2} className="opacity-80" />
+            {Math.round(windSpeed)} {windUnitLabel}
+          </span>
+        )}
+        <span className="inline-flex items-center gap-[0.3em]">
+          <Sun style={statStyle} strokeWidth={2} className="opacity-80" />
+          UV {Math.round(uv ?? 0)}
+        </span>
+      </div>
     </div>
   );
 }
