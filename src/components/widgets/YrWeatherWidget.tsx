@@ -165,6 +165,7 @@ export default function YrWeatherWidget({
         temp: Math.round(h.temperature_2m[idx] ?? 0),
         code: h.weather_code[idx] ?? 0,
         isDay: typeof h.is_day?.[idx] === "number" ? h.is_day[idx] === 1 : true,
+        wind: Math.round(h.wind_speed_10m?.[idx] ?? 0),
       };
     });
   })();
@@ -181,7 +182,7 @@ export default function YrWeatherWidget({
     // clock right), condition lines in the middle-left, and wind/UV + the
     // 3-hour strip on the bottom corners. justify-between fills the tile height
     // without stacking the two 4.6em numbers vertically (which overflowed).
-    <div className="relative flex flex-col justify-between w-full h-full overflow-hidden pt-[0.1em]">
+    <div className="relative flex flex-col justify-between w-full h-full pt-[0.1em]">
 
       {/* Top row: temp + icon (left) · clock (right) */}
       <div className="flex items-center justify-between gap-[0.4em]" >
@@ -231,6 +232,9 @@ export default function YrWeatherWidget({
                     {h.temp}
                     {tempSuffix}
                   </span>
+                  <span style={{ fontSize: "0.7em" }} className="opacity-60 leading-none mt-[0.1em]">
+                    {h.wind} {windUnitLabel}
+                  </span>
                 </div>
               ))}
             </div>
@@ -239,7 +243,7 @@ export default function YrWeatherWidget({
       </div>
 
       {/* Bottom-left: wind + UV */}
-      <div style={{ fontSize: "16px", opacity: 0.8 }} className="flex justify-between items-end leading-none">
+      <div style={{ fontSize: "16px", opacity: 0.8 }} className="flex items-end leading-none">
         <div className="flex items-center gap-x-[0.9em]">
           {windSpeed !== undefined && (
             <span className="inline-flex items-center gap-[0.3em]">
@@ -252,13 +256,15 @@ export default function YrWeatherWidget({
             UV {Math.round(uv ?? 0)}
           </span>
         </div>
-
-        {updatedAgo && (
-          <div className="mr-0 opacity-70" style={{ fontSize: "12px" }}>
-            {t("Aktualisiert")}: {updatedAgo}
-          </div>
-        )}
       </div>
+
+      {/* "Updated" pinned to the very bottom-right corner so the taller hourly
+          block has room above it. */}
+      {updatedAgo && (
+        <div className="absolute -bottom-2 right-0 opacity-70 leading-none" style={{ fontSize: "12px" }}>
+          {t("Aktualisiert")}: {updatedAgo}
+        </div>
+      )}
     </div>
   );
 }
