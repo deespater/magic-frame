@@ -64,7 +64,8 @@ export async function summarizeWeather(weather: NormalizedWeather, opts: Summary
         "prefer windy when wind is strong. Do not use uncommon words like 'overcast'. " +
         '"soon" (3-5 words, never empty) names the NEXT notable weather EVENT or change ahead: ' +
         "rain starting or stopping, wind picking up or easing, clearing, clouding over, a temperature drop, frost. " +
-        'Say what and roughly when, e.g. "Rain by 5pm", "Wind picking up tonight", "Clearing after noon", "Calm clear evening", "Turning colder later". ' +
+        'Say what and roughly when, e.g. "Rain by 17:00", "Wind picking up tonight", "Clearing after noon", "Calm clear evening", "Turning colder later". ' +
+        "ALWAYS write clock times in 24-hour format (e.g. 17:00, 08:00) — never use am/pm or 12-hour times. " +
         "Look as far ahead as needed: if the next few hours are unchanged, describe what changes later today or tonight. " +
         "If the current local time is already late evening or night, skip the quiet night and give a glimpse of TOMORROW MORNING instead, " +
         'e.g. "Wet morning ahead", "Frosty clear morning", "Mild dry morning". ' +

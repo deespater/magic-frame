@@ -149,18 +149,19 @@ export default function YrWeatherWidget({
   // "staying <condition>" so the slot is never empty.
   const soonText = blurb.soon || `${t("Bleibt")} ${baseWord}`;
 
-  // Next 3 hours — first future timestep onward.
+  // Next 3 hours, starting at the NEXT hour — the current conditions are already
+  // shown big above, so "Now" would be redundant.
   const hourly = (() => {
     const h = data.hourly;
     if (!h || !Array.isArray(h.time)) return [];
     const now = Date.now();
-    let startIdx = h.time.findIndex((iso: string) => new Date(iso).getTime() >= now - 60 * 60 * 1000);
+    let startIdx = h.time.findIndex((iso: string) => new Date(iso).getTime() > now);
     if (startIdx < 0) startIdx = 0;
     return h.time.slice(startIdx, startIdx + 3).map((iso: string, i: number) => {
       const idx = startIdx + i;
       const d = new Date(iso);
       return {
-        label: i === 0 ? t("Jetzt") : `${d.getHours().toString().padStart(2, "0")}:00`,
+        label: `${d.getHours().toString().padStart(2, "0")}:00`,
         temp: Math.round(h.temperature_2m[idx] ?? 0),
         code: h.weather_code[idx] ?? 0,
         isDay: typeof h.is_day?.[idx] === "number" ? h.is_day[idx] === 1 : true,
@@ -214,18 +215,19 @@ export default function YrWeatherWidget({
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-[1em] mt-[0.2em] shrink-0">
+        <div className="flex items-center justify-between gap-[1em] shrink-0 mt-[2px]">
+          {/* Bigger label/temp fonts, tighter gaps → same block footprint. */}
           {hourly.length > 0 && (
-            <div className="flex gap-[1.1em] md:gap-[1.5em] items-center shrink-0">
+            <div className="flex gap-[0.75em] md:gap-[1em] items-center shrink-0">
               {hourly.map((h: any, i: number) => (
-                <div key={i} className="flex flex-col items-center gap-[0.2em]">
-                  <span style={{ fontSize: "0.8em" }} className="opacity-80 tracking-wide font-medium">
+                <div key={i} className="flex flex-col items-center gap-[0.15em]">
+                  <span style={{ fontSize: "1em" }} className="uppercase opacity-80 tracking-wide font-medium">
                     {h.label}
                   </span>
                   <div style={{ width: "1.2em", height: "1.2em" }} className="opacity-90 drop-shadow-sm">
                     {wmoToIcon(h.code, h.isDay, config?.iconSet, { style: config?.meteoconsStyle })}
                   </div>
-                  <span style={{ fontSize: "0.75em" }} className="font-bold leading-none">
+                  <span style={{ fontSize: "0.95em" }} className="font-bold leading-none">
                     {h.temp}
                     {tempSuffix}
                   </span>
@@ -237,7 +239,7 @@ export default function YrWeatherWidget({
       </div>
 
       {/* Bottom-left: wind + UV */}
-      <div style={{ fontSize: "16px", opacity: 0.8 }} className="flex justify-between items-end">
+      <div style={{ fontSize: "16px", opacity: 0.8 }} className="flex justify-between items-end leading-none">
         <div className="flex items-center gap-x-[0.9em]">
           {windSpeed !== undefined && (
             <span className="inline-flex items-center gap-[0.3em]">
