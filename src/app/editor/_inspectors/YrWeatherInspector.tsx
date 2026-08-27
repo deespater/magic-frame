@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import type { WidgetLayoutItem } from "../_types";
 import { useT } from "@/lib/i18n/LocaleProvider";
 import { normalizeIconSet } from "@/lib/weather/wmo";
@@ -183,16 +183,19 @@ export default function YrWeatherInspector({
           {t("Ein Wort zum aktuellen Wetter plus ein kurzer Hinweis auf die nächsten 1-2 Stunden. Braucht einen Anthropic-API-Key in den Einstellungen oder ANTHROPIC_API_KEY.")}
         </p>
         {aiOn && (
-          <div>
-            <label className="text-xs font-medium text-[var(--mf-fg)]/70 block mb-1.5">{t("Ton (optional)")}</label>
-            <input
-              type="text"
-              value={cfg.aiTone || ""}
-              placeholder={t("z.B. verspielt, knapp, sachlich")}
-              onChange={(e) => updateConfig(activeWidget.i, "aiTone", e.target.value)}
-              className="w-full bg-[var(--mf-surface)] border border-[var(--mf-bdr)]/10 text-[var(--mf-fg)] text-sm rounded-lg p-2 focus:outline-none focus:border-violet-500"
-            />
-          </div>
+          <>
+            <div>
+              <label className="text-xs font-medium text-[var(--mf-fg)]/70 block mb-1.5">{t("Ton (optional)")}</label>
+              <input
+                type="text"
+                value={cfg.aiTone || ""}
+                placeholder={t("z.B. verspielt, knapp, sachlich")}
+                onChange={(e) => updateConfig(activeWidget.i, "aiTone", e.target.value)}
+                className="w-full bg-[var(--mf-surface)] border border-[var(--mf-bdr)]/10 text-[var(--mf-fg)] text-sm rounded-lg p-2 focus:outline-none focus:border-violet-500"
+              />
+            </div>
+            <AnthropicKeyField />
+          </>
         )}
       </div>
 
@@ -207,6 +210,92 @@ export default function YrWeatherInspector({
           className="w-full bg-[var(--mf-surface)] border border-[var(--mf-bdr)]/5 text-[var(--mf-fg)] font-sans text-sm rounded-lg p-3 focus:outline-none focus:border-[var(--mf-bdr)]/20"
         />
       </div>
+    </div>
+  );
+}
+
+
+// Anthropic API key field. The key is stored SERVER-SIDE (settings.extra.anthropic
+// via /api/admin/anthropic-credentials) — never in the widget config, so it never
+// reaches a display's browser. We only ever read back a "configured?" status.
+function AnthropicKeyField() {
+  const t = useT();
+  const [status, setStatus] = useState<{ configured: boolean; fromEnv: boolean } | null>(null);
+  const [keyInput, setKeyInput] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/admin/anthropic-credentials")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d && typeof d.configured === "boolean") setStatus(d);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const save = async () => {
+    if (keyInput.trim() === "") return;
+    setSaving(true);
+    setSaved(false);
+    try {
+      const r = await fetch("/api/admin/anthropic-credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apiKey: keyInput.trim() }),
+      });
+      const d = await r.json().catch(() => null);
+      if (r.ok && d?.status) {
+        setStatus(d.status);
+        setKeyInput("");
+        setSaved(true);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-[var(--mf-bdr)]/10 bg-[var(--mf-surface)]/40 p-3 space-y-2">
+      <label className="text-xs font-medium text-[var(--mf-fg)]/70 block">
+        {t("Anthropic API-Key (serverseitig gespeichert)")}
+      </label>
+      {status?.fromEnv ? (
+        <p className="text-[11px] text-[var(--mf-fg)]/50">
+          {t("Über die Server-Umgebung gesetzt (ANTHROPIC_API_KEY) — hier nicht änderbar.")}
+        </p>
+      ) : (
+        <>
+          <div className="flex gap-2">
+            <input
+              type="password"
+              value={keyInput}
+              onChange={(e) => {
+                setKeyInput(e.target.value);
+                setSaved(false);
+              }}
+              placeholder={status?.configured ? t("Key gesetzt — neuen eingeben zum Ersetzen") : "sk-ant-..."}
+              className="flex-1 min-w-0 bg-[var(--mf-surface)] border border-[var(--mf-bdr)]/10 text-[var(--mf-fg)] text-sm rounded-lg p-2 focus:outline-none focus:border-violet-500"
+            />
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving || keyInput.trim() === ""}
+              className="shrink-0 px-3 rounded-lg text-sm font-medium bg-violet-500/20 border border-violet-500/30 text-[var(--mf-fg)] disabled:opacity-40"
+            >
+              {saving ? t("Speichert…") : t("Key speichern")}
+            </button>
+          </div>
+          <p className="text-[11px] text-[var(--mf-fg)]/40">
+            {status?.configured ? `✓ ${t("Key gesetzt")}` : t("Kein Key gesetzt")}
+            {saved ? ` · ${t("Gespeichert!")}` : ""} · {t("Wird serverseitig gespeichert, nie im Layout.")}
+          </p>
+        </>
+      )}
     </div>
   );
 }

@@ -2169,6 +2169,16 @@ export const EN: Record<string, string> = {
   "Yr Wetter (KI)": "Yr weather (AI)",
   "Bleibt": "Staying",
   "Aktualisiert": "Updated",
+  "Anthropic API-Key (serverseitig gespeichert)": "Anthropic API key (stored on the server)",
+  "Über die Server-Umgebung gesetzt (ANTHROPIC_API_KEY) — hier nicht änderbar.":
+    "Set via the server environment (ANTHROPIC_API_KEY) — not editable here.",
+  "Key gesetzt — neuen eingeben zum Ersetzen": "Key set — enter a new one to replace",
+  "Speichert…": "Saving…",
+  "Key speichern": "Save key",
+  "Key gesetzt": "Key set",
+  "Kein Key gesetzt": "No key set",
+  "Gespeichert!": "Saved!",
+  "Wird serverseitig gespeichert, nie im Layout.": "Stored on the server, never in the layout.",
   "Verzögerung vor dem Ausblenden": "Delay before hiding",
   "Sofort": "Immediately",
 };
