@@ -173,14 +173,15 @@ export default function YrWeatherWidget({
     // 3-hour strip on the bottom corners. justify-between fills the tile height
     // without stacking the two 4.6em numbers vertically (which overflowed).
     <div className="relative flex flex-col justify-between w-full h-full overflow-hidden py-[0.1em]">
+
       {/* Top row: temp + icon (left) · clock (right) */}
-      <div className="flex items-center justify-between gap-[0.4em]">
+      <div className="flex items-center justify-between gap-[0.4em]" >
         <div className="flex items-center gap-[0.2em] min-w-0">
           <span style={{ fontSize: "4.6em" }} className="tracking-tighter leading-none">
             {currentTemp}
             {tempSuffix}
           </span>
-          <div style={{ width: "3.2em", height: "3.2em" }} className="shrink-0 flex items-center justify-center">
+          <div style={{ width: "4.6em", height: "4.6em" }} className="ml-2 shrink-0 flex items-center justify-center">
             {wmoToIcon(currentCode, !isNight, config?.iconSet, iconOpts)}
           </div>
         </div>
@@ -191,21 +192,19 @@ export default function YrWeatherWidget({
 
       {/* Middle: condition line, then near-term (left) sharing a row with the
           3-hour strip (right) */}
-      <div className="min-w-0">
-        <div
-          style={{ fontSize: "1.25em", opacity: 0.85 }}
-          className="uppercase tracking-wide text-ellipsis whitespace-nowrap overflow-hidden"
-        >
-          {word}, {t("Fühlt sich an wie")} {feelsLike}
-          {tempSuffix}
-        </div>
-        <div className="flex items-center justify-between gap-[1em] mt-[0.2em]">
-          <div
-            style={{ fontSize: "1em", opacity: 0.65 }}
-            className="min-w-0 flex-1 uppercase tracking-wide text-ellipsis whitespace-nowrap overflow-hidden"
-          >
+      <div className="min-w-0 flex flex-row items-top justify-between">
+
+        <div>
+          <div style={{ fontSize: "1.25em", opacity: 0.85 }} className="uppercase tracking-wide text-ellipsis whitespace-nowrap overflow-hidden">
+            {word}, {t("Fühlt sich an wie")} {feelsLike}
+            {tempSuffix}
+          </div>
+          <div style={{ fontSize: "1em", opacity: 0.65 }} className="min-w-0 flex-1 uppercase tracking-wide text-ellipsis whitespace-nowrap overflow-hidden">
             {soonText}
           </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-[1em] mt-[0.2em]">
           {hourly.length > 0 && (
             <div className="flex gap-[1.1em] md:gap-[1.5em] items-center shrink-0">
               {hourly.map((h: any, i: number) => (
@@ -228,17 +227,21 @@ export default function YrWeatherWidget({
       </div>
 
       {/* Bottom-left: wind + UV */}
-      <div style={{ fontSize: "14px", opacity: 0.8 }} className="flex items-center gap-x-[0.9em]">
-        {windSpeed !== undefined && (
+      <div style={{ fontSize: "14px", opacity: 0.8 }} className="flex justify-between items-end">
+        <div className="flex items-center gap-x-[0.9em]">
+          {windSpeed !== undefined && (
+            <span className="inline-flex items-center gap-[0.3em]">
+              <Wind style={statStyle} strokeWidth={2} className="opacity-80" />
+              {Math.round(windSpeed)} {windUnitLabel}
+            </span>
+          )}
           <span className="inline-flex items-center gap-[0.3em]">
-            <Wind style={statStyle} strokeWidth={2} className="opacity-80" />
-            {Math.round(windSpeed)} {windUnitLabel}
+            <Sun style={statStyle} strokeWidth={2} className="opacity-80" />
+            UV {Math.round(uv ?? 0)}
           </span>
-        )}
-        <span className="inline-flex items-center gap-[0.3em]">
-          <Sun style={statStyle} strokeWidth={2} className="opacity-80" />
-          UV {Math.round(uv ?? 0)}
-        </span>
+        </div>
+
+        <div className="mr-0" style={{ fontSize: "12px" }}>Last updated: 1 hour ago</div>
       </div>
     </div>
   );
