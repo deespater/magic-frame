@@ -1,6 +1,6 @@
-name: Magic Frame
-version: "1.5.3"
-slug: magic_frame
+name: Magic Frame (Custom)
+version: "1.5.3-custom"
+slug: magic_frame_custom
 description: Dashboard for tablets, monitors, wall panels and picture frames
 url: https://github.com/jeremiaa/magic-frame
 # Nur die Architekturen, für die es ein veröffentlichtes App-Image gibt —
@@ -22,7 +22,7 @@ init: false
 ingress: true
 ingress_port: 8099
 panel_icon: mdi:image-frame
-panel_title: Magic Frame
+panel_title: Magic Frame (Custom)
 # Versteckt den Eintrag vor Nicht-Admins. Das ist NUR Sichtbarkeit — den
 # eigentlichen Schutz macht server-ingress.js, indem es den anfragenden
 # HA-Nutzer gegen die Admin-Liste von Home Assistant prüft.
