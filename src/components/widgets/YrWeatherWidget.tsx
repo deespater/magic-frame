@@ -79,6 +79,9 @@ export default function YrWeatherWidget({
       }
       try {
         const qs = new URLSearchParams({ temperature_unit: unitTemp, lat: String(lat), lon: String(lon) });
+        // Minutes ahead of UTC at the display, so the AI can reason about local
+        // evening/night/morning.
+        qs.set("tz", String(-new Date().getTimezoneOffset()));
         if (tone) qs.set("tone", tone);
         if (location) qs.set("location", location);
         const res = await fetch(`/api/weather/summary?${qs.toString()}`, { signal: controller.signal });
@@ -177,7 +180,7 @@ export default function YrWeatherWidget({
     // clock right), condition lines in the middle-left, and wind/UV + the
     // 3-hour strip on the bottom corners. justify-between fills the tile height
     // without stacking the two 4.6em numbers vertically (which overflowed).
-    <div className="relative flex flex-col justify-between w-full h-full overflow-hidden py-[0.1em]">
+    <div className="relative flex flex-col justify-between w-full h-full overflow-hidden pt-[0.1em]">
 
       {/* Top row: temp + icon (left) · clock (right) */}
       <div className="flex items-center justify-between gap-[0.4em]" >
@@ -197,19 +200,21 @@ export default function YrWeatherWidget({
 
       {/* Middle: condition line, then near-term (left) sharing a row with the
           3-hour strip (right) */}
-      <div className="min-w-0 flex flex-row items-start justify-between">
+      <div className="min-w-0 flex flex-row items-start justify-between gap-[1em]">
 
-        <div>
+        <div className="min-w-0 flex-1">
           <div style={{ fontSize: "1.25em", opacity: 0.85 }} className="uppercase tracking-wide text-ellipsis whitespace-nowrap overflow-hidden">
             {word}, {t("Fühlt sich an wie")} {feelsLike}
             {tempSuffix}
           </div>
-          <div style={{ fontSize: "1em", opacity: 0.65 }} className="min-w-0 flex-1 uppercase tracking-wide text-ellipsis whitespace-nowrap overflow-hidden">
+          {/* near-term line: small gap from the condition line, and tight
+              leading so a wrapped 2-line phrase reads as one unit */}
+          <div style={{ fontSize: "1em", opacity: 0.65 }} className="mt-[0.25em] uppercase tracking-wide break-words line-clamp-2 leading-[1.15]">
             {soonText}
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-[1em] mt-[0.2em]">
+        <div className="flex items-center justify-between gap-[1em] mt-[0.2em] shrink-0">
           {hourly.length > 0 && (
             <div className="flex gap-[1.1em] md:gap-[1.5em] items-center shrink-0">
               {hourly.map((h: any, i: number) => (
@@ -232,7 +237,7 @@ export default function YrWeatherWidget({
       </div>
 
       {/* Bottom-left: wind + UV */}
-      <div style={{ fontSize: "14px", opacity: 0.8 }} className="flex justify-between items-end">
+      <div style={{ fontSize: "16px", opacity: 0.8 }} className="flex justify-between items-end">
         <div className="flex items-center gap-x-[0.9em]">
           {windSpeed !== undefined && (
             <span className="inline-flex items-center gap-[0.3em]">

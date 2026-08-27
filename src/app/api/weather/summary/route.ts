@@ -14,6 +14,9 @@ export async function GET(request: Request) {
   const tempUnitRaw = searchParams.get("temperature_unit") ?? "celsius";
   const tone = searchParams.get("tone") ?? "";
   const location = searchParams.get("location") ?? "";
+  // Minutes to add to UTC for the display's local time (clamped to ±14h).
+  const tzRaw = parseInt(searchParams.get("tz") ?? "", 10);
+  const tzOffsetMin = Number.isFinite(tzRaw) ? Math.max(-840, Math.min(840, tzRaw)) : 0;
 
   if (!lat || !lon) {
     return NextResponse.json({ error: "Latitude and Longitude are required" }, { status: 400 });
@@ -27,6 +30,7 @@ export async function GET(request: Request) {
       locationLabel: location,
       tone,
       unitTemp: tempUnit,
+      tzOffsetMin,
     });
     return NextResponse.json(blurb); // { word, soon }
   } catch (error: any) {

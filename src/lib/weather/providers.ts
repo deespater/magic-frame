@@ -31,6 +31,7 @@ export type NormalizedWeather = {
     weather_code: number[];
     precipitation_probability?: number[];
     is_day?: number[];
+    wind_speed_10m?: number[];
   };
   _provider?: string;
 };
@@ -275,6 +276,10 @@ export async function fetchYr(
     is_day: hourlySlice.map((s) =>
       yrIsDay(s?.data?.next_1_hours?.summary?.symbol_code ?? s?.data?.next_6_hours?.summary?.symbol_code ?? "") ?? 1,
     ),
+    wind_speed_10m: hourlySlice.map((s) => {
+      const w = s?.data?.instant?.details?.wind_speed;
+      return typeof w === "number" ? convertWind(w) : 0;
+    }),
   };
 
   // Daily — group timesteps by calendar day, take min/max of the instant temps

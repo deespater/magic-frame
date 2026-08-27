@@ -32,6 +32,9 @@ export type SummaryOpts = {
   // Free-text style hint for the "soon" phrase, e.g. "playful". Empty = neutral.
   tone?: string;
   unitTemp: "celsius" | "fahrenheit";
+  // Minutes to add to UTC to reach the location's local time (from the display),
+  // so the model can reason about evening/night/morning and time-of-day.
+  tzOffsetMin?: number;
 };
 
 const EMPTY: WeatherBlurb = { word: "", soon: "" };
@@ -53,14 +56,19 @@ export async function summarizeWeather(weather: NormalizedWeather, opts: Summary
       model: MODEL,
       max_tokens: 120,
       system:
-        "You describe weather for an at-a-glance home display. Return ONLY a JSON object " +
-        '{"word": string, "soon": string} and nothing else. ' +
-        '"word" is ONE common lowercase word for the CURRENT weather — pick the single most salient ' +
+        "You describe weather for an at-a-glance home display people use to plan the day — " +
+        "what to wear, whether to pack a raincoat, how to dress a kid for kindergarten. " +
+        'Return ONLY a JSON object {"word": string, "soon": string} and nothing else. ' +
+        '"word" is ONE common lowercase word for the CURRENT weather — the single most salient ' +
         "(sunny, clear, cloudy, rainy, drizzly, snowy, foggy, windy, humid, hot, cold, stormy); " +
         "prefer windy when wind is strong. Do not use uncommon words like 'overcast'. " +
-        '"soon" is ALWAYS a very short phrase (max ~5 words) about the next 1-2 hours — never empty. ' +
-        'If something notable changes, say what and roughly when (e.g. "Rain in 2 hours", "Turning windy", "Clearing up"). ' +
-        'If nothing notable changes, describe the steady near-term instead (e.g. "Staying clear", "Cloudy for hours", "No change soon"). ' +
+        '"soon" (3-5 words, never empty) names the NEXT notable weather EVENT or change ahead: ' +
+        "rain starting or stopping, wind picking up or easing, clearing, clouding over, a temperature drop, frost. " +
+        'Say what and roughly when, e.g. "Rain by 5pm", "Wind picking up tonight", "Clearing after noon", "Calm clear evening", "Turning colder later". ' +
+        "Look as far ahead as needed: if the next few hours are unchanged, describe what changes later today or tonight. " +
+        "If the current local time is already late evening or night, skip the quiet night and give a glimpse of TOMORROW MORNING instead, " +
+        'e.g. "Wet morning ahead", "Frosty clear morning", "Mild dry morning". ' +
+        'Be concrete and useful for planning — never vague filler like "clear for hours", "no change", or "staying the same". ' +
         "No markdown, no preamble, no emoji.",
       messages: [{ role: "user", content: prompt }],
     });
@@ -98,25 +106,43 @@ function buildPrompt(w: NormalizedWeather, opts: SummaryOpts): string {
   const unit = opts.unitTemp === "fahrenheit" ? "°F" : "°C";
   const round = (n: number | undefined) => (typeof n === "number" ? Math.round(n) : undefined);
 
+  // Shift UTC by the display's offset, then read via getUTC* to get local
+  // wall-clock — lets the model reason about evening/night/morning.
+  const offsetMin = typeof opts.tzOffsetMin === "number" ? opts.tzOffsetMin : 0;
+  const toLocal = (utcMs: number) => new Date(utcMs + offsetMin * 60000);
+  const hhmm = (d: Date) =>
+    `${d.getUTCHours().toString().padStart(2, "0")}:${d.getUTCMinutes().toString().padStart(2, "0")}`;
+
   const lines: string[] = [];
   if (opts.locationLabel) lines.push(`Location: ${opts.locationLabel}`);
+  lines.push(`Current local time: ${hhmm(toLocal(Date.now()))}`);
   lines.push(`Now: ${round(w.current.temperature_2m)}${unit}, ${wmoLabel(w.current.weather_code)}`);
-  if (typeof w.current.wind_speed_10m === "number") lines.push(`Wind: ${round(w.current.wind_speed_10m)}`);
+  if (typeof w.current.wind_speed_10m === "number") lines.push(`Wind now: ${round(w.current.wind_speed_10m)}`);
   if (typeof w.current.relative_humidity_2m === "number") lines.push(`Humidity: ${round(w.current.relative_humidity_2m)}%`);
   if (typeof w.current.uv_index === "number") lines.push(`UV index: ${round(w.current.uv_index)}`);
 
   if (w.hourly?.time?.length) {
-    // Next few hours so the model can judge whether anything notable changes.
-    const n = Math.min(6, w.hourly.time.length);
+    // A longer horizon (up to 18h) with local hour, condition, rain chance and
+    // wind, so the model can find the next real change rather than just the next
+    // hour. Local hour labels so "evening"/"morning" line up.
+    const n = Math.min(18, w.hourly.time.length);
     const trend: string[] = [];
     for (let i = 0; i < n; i++) {
-      const hr = new Date(w.hourly.time[i]).getHours();
+      const hr = hhmm(toLocal(new Date(w.hourly.time[i]).getTime())).slice(0, 2);
       const t = round(w.hourly.temperature_2m[i]);
       const pop = w.hourly.precipitation_probability?.[i];
-      const popStr = typeof pop === "number" && pop > 0 ? ` ${pop}% precip` : "";
-      trend.push(`${hr}h ${t}${unit} ${wmoLabel(w.hourly.weather_code[i])}${popStr}`);
+      const wind = round(w.hourly.wind_speed_10m?.[i]);
+      const popStr = typeof pop === "number" && pop > 0 ? ` ${pop}%rain` : "";
+      const windStr = typeof wind === "number" ? ` wind${wind}` : "";
+      trend.push(`${hr}h ${t}${unit} ${wmoLabel(w.hourly.weather_code[i])}${popStr}${windStr}`);
     }
-    lines.push(`Next hours: ${trend.join("; ")}`);
+    lines.push(`Hourly (local): ${trend.join("; ")}`);
+  }
+
+  if (w.daily?.time?.length && w.daily.time.length > 1) {
+    lines.push(
+      `Tomorrow: high ${round(w.daily.temperature_2m_max[1])}${unit}, low ${round(w.daily.temperature_2m_min[1])}${unit}, ${wmoLabel(w.daily.weather_code[1])}`,
+    );
   }
 
   const tone = (opts.tone || "").trim();
