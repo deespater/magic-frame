@@ -2168,6 +2168,7 @@ export const EN: Record<string, string> = {
   "z.B. verspielt, knapp, sachlich": "e.g. playful, brief, factual",
   "Yr Wetter (KI)": "Yr weather (AI)",
   "Bleibt": "Staying",
+  "Aktualisiert": "Updated",
   "Verzögerung vor dem Ausblenden": "Delay before hiding",
   "Sofort": "Immediately",
 };

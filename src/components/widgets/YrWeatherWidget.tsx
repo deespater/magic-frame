@@ -30,6 +30,8 @@ export default function YrWeatherWidget({
   const [data, setData] = useState<any>(null);
   const [blurb, setBlurb] = useState<Blurb>({ word: "", soon: "" });
   const [error, setError] = useState<string | null>(null);
+  // Timestamp of the last successful weather fetch, for the "Last updated" line.
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
 
   // Minute tick so day/night flips without a fresh fetch (see WeatherWidget).
   const [nowTick, setNowTick] = useState(() => Date.now());
@@ -63,6 +65,7 @@ export default function YrWeatherWidget({
         }
         setData(result);
         setError(null);
+        setLastUpdated(Date.now());
       } catch (e: any) {
         if (e?.name === "AbortError") return;
         if (!cancelled) setError(t("Wetterdaten nicht verfügbar"));
@@ -132,6 +135,8 @@ export default function YrWeatherWidget({
   const nowD = new Date(nowTick);
   // 24-hour clock, no seconds — re-renders each minute via nowTick.
   const timeStr = `${nowD.getHours().toString().padStart(2, "0")}:${nowD.getMinutes().toString().padStart(2, "0")}`;
+  // Relative "last updated" — recomputes each minute via nowTick.
+  const updatedAgo = lastUpdated ? relativeAgo(lastUpdated, nowTick) : "";
   const isNight =
     typeof data.current.is_day === "number" ? data.current.is_day === 0 : nowD.getHours() < 6 || nowD.getHours() > 20;
 
@@ -192,7 +197,7 @@ export default function YrWeatherWidget({
 
       {/* Middle: condition line, then near-term (left) sharing a row with the
           3-hour strip (right) */}
-      <div className="min-w-0 flex flex-row items-top justify-between">
+      <div className="min-w-0 flex flex-row items-start justify-between">
 
         <div>
           <div style={{ fontSize: "1.25em", opacity: 0.85 }} className="uppercase tracking-wide text-ellipsis whitespace-nowrap overflow-hidden">
@@ -241,10 +246,27 @@ export default function YrWeatherWidget({
           </span>
         </div>
 
-        <div className="mr-0" style={{ fontSize: "12px" }}>Last updated: 1 hour ago</div>
+        {updatedAgo && (
+          <div className="mr-0 opacity-70" style={{ fontSize: "12px" }}>
+            {t("Aktualisiert")}: {updatedAgo}
+          </div>
+        )}
       </div>
     </div>
   );
+}
+
+
+// Short relative time for the "last updated" line: "just now", "5 min ago",
+// "1 hour ago". Granularity is a minute, which matches the minute tick that
+// drives it (data itself refreshes every 15 min).
+function relativeAgo(fromMs: number, nowMs: number): string {
+  const secs = Math.max(0, Math.floor((nowMs - fromMs) / 1000));
+  if (secs < 45) return "just now";
+  const mins = Math.round(secs / 60);
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.round(mins / 60);
+  return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
 }
 
 
